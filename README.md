@@ -43,7 +43,7 @@ Product Lifecycle
 
 #### Research Papers ####
 
-DeepAPL Probabilistic Forecasting with Autoregressive Recurrent Networks
+DeepAR Probabilistic Forecasting with Autoregressive Recurrent Networks
 
 Amazon's paper on Demand Forecasting
 https://arxiv.org/pdf/1704.04110.pdf
