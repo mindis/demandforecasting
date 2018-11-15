@@ -17,4 +17,4 @@ from
 (select (department_number || '.' || sub_department_number || '.' || class_number) as biz_cd, ph.*
 from ddw.product_hierarchy_dim ph)
 join 
-where biz_cd in ('260.10.1', '600.24.4', '350.5.1', '500.1.1', '700.24.1', '160.4.1', '315.1.3'); --just PoC areas
+where biz_cd in ('260.10.1', '600.24.4', '520.1.4', '500.1.1', '700.24.1', '311.1.7', '315.1.3'); --just PoC areas
