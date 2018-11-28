@@ -2,18 +2,21 @@ library(keras)
 library(tensorflow)
 library(tidyverse)
 library(reticulate)
-use_python("/usr/bin/python3")
 
-# scaled_demand_wide <- readRDS("scaled_demand_wide.RDS")
-py_config()
+# use_python("/usr/bin/python")
+# py_config()
+
+tf$Session()
+demand_wide <- readRDS("demand_wide.RDS")
+
 windowSize <- 52
-testSize <- 8
-batchSize <- 32
+testSize <- 12
+batchSize <- 128
 
 
 input_demand <- layer_input(shape = c(windowSize, 1L), name = "demand")
 demand <- input_demand %>%
-  layer_lstm(units = 128)
+  layer_lstm(units = 128, activation = "tanh")
   
 
 input_store <- layer_input(shape = 1L, name = "store") 
@@ -31,12 +34,12 @@ scale_factor <- input_scale_factor %>%
   layer_repeat_vector(testSize)
 
 predictions <- layer_concatenate(list(demand,
-                                      
                                store, 
                                biz_cd)) %>%
+  layer_dense(256, activation = "relu") %>%
   layer_repeat_vector(n = testSize) %>%
-  layer_lstm(units = 256, return_sequences = TRUE) %>%
-  time_distributed(layer_dense(units = 256, activation = "relu")) %>%
+  layer_lstm(units = 256, return_sequences = TRUE, activation = "tanh") %>%
+  time_distributed(layer_dense(units = 256, activation = "relu")) %>% 
   time_distributed(layer_dense(unit = 2, activation = "softplus"))
 
 output <- list(predictions, scale_factor) %>%
@@ -51,22 +54,24 @@ summary(model)
 
 model %>%
   fit_generator(generator = custom_data_generator(data = demand_wide, 
-                                                  batchSize = 64, 
+                                                  batchSize = batchSize, 
                                                   probs = demand_wide$sampling_probability, 
-                                                  windowSize = 52, 
-                                                  testSize = 8), 
+                                                  windowSize = windowSize, 
+                                                  testSize = testSize), 
                 steps_per_epoch = nrow(demand_wide) / batchSize, 
-                epochs = 1)
+                epochs = 25)
 
-check <- custom_data_generator(data = demand_wide, 
+ check <- custom_data_generator(data = demand_wide, 
                                batchSize = 1, 
                                probs = demand_wide$sampling_probability, 
                                windowSize = 52, 
-                               testSize = 8)
+                               testSize = 12)
 chck <- check()
 
 test <-predict(model, chck[[1]])
 mu <- test[,,1] * test[,,3]
 alpha <- 1 / (test[,,2] / sqrt(test[,,3]))
-rnegbin(8, mu, alpha)
+
+chck
+rnegbin(12, mu, alpha)
 
